@@ -14,9 +14,9 @@ from crawler import parse_quora_date
 # one has access to the "Your Content" page of a user.  In other cases
 # one must effectively find all the URLs for the answers of a user by
 # other means.  Here we assume a user has scrolled to the very bottom of
-# a user's answers page and saved that an HTML.  This is passed in as
+# a user's answers page and saved that as an HTML.  This is passed in as
 # INPUT_FILE (for now); the rest is the same as crawler.py, so
-# converter.py will also work.
+# converter.py will work on the output files of this script.
 
 # One subtlety is that on the "Your Content" page, the timestamp shown
 # is for when a user first added the answer(?), but on an answer page,
