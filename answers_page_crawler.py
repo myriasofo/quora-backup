@@ -9,6 +9,20 @@ import time
 
 from crawler import parse_quora_date
 
+# crawler.py assumes one has access to the nicely-formatted JSON of the
+# answers and their timestamps.  However, one can only obtain this if
+# one has access to the "Your Content" page of a user.  In other cases
+# one must effectively find all the URLs for the answers of a user by
+# other means.  Here we assume a user has scrolled to the very bottom of
+# a user's answers page and saved that an HTML.  This is passed in as
+# INPUT_FILE (for now); the rest is the same as crawler.py, so
+# converter.py will also work.
+
+# One subtlety is that on the "Your Content" page, the timestamp shown
+# is for when a user first added the answer(?), but on an answer page,
+# it only displays the timestamp of when the answer was last updated.
+# Therefore the timestamp in the filename will be altered accordingly.
+
 # Change this
 INPUT_FILE = "changeme.html"
 
