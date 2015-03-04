@@ -67,99 +67,100 @@ def parse_quora_date(origin, quora_str):
         raise ValueError('date "%s" could not be interpreted' % date_str)
     return '%d-%02d-%02d' % (tm.tm_year, tm.tm_mon, tm.tm_mday)
 
-parser = argparse.ArgumentParser(description = 'Download a set of answers from Quora')
-parser.add_argument('input_file', help='file containing JSON-encoded list of timestamped URLs to download')
-parser.add_argument('output_dir', nargs='?', default='./quora-answers', help='where to store the downloaded answers and images')
-parser.add_argument('-d', '--delay', default=0, type=float, help='Time to sleep between answers, in seconds')
-parser.add_argument('-t', '--origin_timestamp', default=None, type=int, help='JS time when the list of URLs was fetched')
-parser.add_argument('-z', '--origin_timezone', default=None, type=int, help='browser timezone') 
-parser.add_argument('-v', '--verbose', action='store_true', help='enable debug messages')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description = 'Download a set of answers from Quora')
+    parser.add_argument('input_file', help='file containing JSON-encoded list of timestamped URLs to download')
+    parser.add_argument('output_dir', nargs='?', default='./quora-answers', help='where to store the downloaded answers and images')
+    parser.add_argument('-d', '--delay', default=0, type=float, help='Time to sleep between answers, in seconds')
+    parser.add_argument('-t', '--origin_timestamp', default=None, type=int, help='JS time when the list of URLs was fetched')
+    parser.add_argument('-z', '--origin_timezone', default=None, type=int, help='browser timezone') 
+    parser.add_argument('-v', '--verbose', action='store_true', help='enable debug messages')
 
-global args
-args = parser.parse_args()
+    global args
+    args = parser.parse_args()
 
-# Determine the origin for relative date computation
-if args.origin_timestamp is None:
-    log_if_v('Using current time')
-    args.origin_timestamp = time.time()
-else:
-    args.origin_timestamp //= 1000
-if args.origin_timezone is None:
-    log_if_v('Using system time zone')
-    args.origin_timezone = time.timezone
-else:
-    args.origin_timezone *= 60
-origin = args.origin_timestamp - args.origin_timezone
+    # Determine the origin for relative date computation
+    if args.origin_timestamp is None:
+        log_if_v('Using current time')
+        args.origin_timestamp = time.time()
+    else:
+        args.origin_timestamp //= 1000
+    if args.origin_timezone is None:
+        log_if_v('Using system time zone')
+        args.origin_timezone = time.timezone
+    else:
+        args.origin_timezone *= 60
+    origin = args.origin_timestamp - args.origin_timezone
 
-# Load the list of answer URLs from the input file.
-log_if_v('Loading input file %s' % args.input_file)
-with open(args.input_file, 'r') as input_file:
-    answers = json.load(input_file)
-print('Found %d answers' % len(answers), file=sys.stderr)
+    # Load the list of answer URLs from the input file.
+    log_if_v('Loading input file %s' % args.input_file)
+    with open(args.input_file, 'r') as input_file:
+        answers = json.load(input_file)
+    print('Found %d answers' % len(answers), file=sys.stderr)
 
-# Check the validity of the input
-if type(answers) != list:
-    sys.exit('[FATAL] Incorrect input format')
-for e in answers:
-    if type(e) != list or len(e) != 2 or type(e[0]) != str or type(e[1]) != str:
+    # Check the validity of the input
+    if type(answers) != list:
         sys.exit('[FATAL] Incorrect input format')
+    for e in answers:
+        if type(e) != list or len(e) != 2 or type(e[0]) != str or type(e[1]) != str:
+            sys.exit('[FATAL] Incorrect input format')
 
-log_if_v('Creating directory %s' % args.output_dir)
-try:
-    os.mkdir(args.output_dir, 0o700)
-except OSError as error:
-    if error.errno == errno.EEXIST:
-        log_if_v('Directory already exists')
-    else:
-        # This is the top level, and we have nothing else to do if we failed
-        raise
-os.chdir(args.output_dir)
-
-for e in answers:
-    sys.stderr.flush()
-    url = e[0]
-    print('URL: %s' % url, file=sys.stderr)
-
-    # Determine the date when this answer was written
+    log_if_v('Creating directory %s' % args.output_dir)
     try:
-        added_time = parse_quora_date(origin, e[1])
-    except ValueError as error:
-        print('[WARNING] Failed to parse date: %s' % str(error), file=sys.stderr)
-        added_time = 'xxxx-xx-xx'
-    print('Date: %s' % added_time, file=sys.stderr)
+        os.mkdir(args.output_dir, 0o700)
+    except OSError as error:
+        if error.errno == errno.EEXIST:
+            log_if_v('Directory already exists')
+        else:
+            # This is the top level, and we have nothing else to do if we failed
+            raise
+    os.chdir(args.output_dir)
 
-    # Get the part of the URL indicating the question title; we will save under this name
-    m1 = re.search('quora\.com/([^/]+)/answer', url)
-    # if there's a context topic
-    m2 = re.search('quora\.com/[^/]+/([^/]+)/answer', url)
-    filename = added_time + ' '
-    if not m1 is None:
-        filename += m1.group(1)
-    elif not m2 is None:
-        filename += m2.group(1)
-    else:
-        print('[ERROR] Could not find question part of URL %s; skipping' % url, file=sys.stderr)
-        continue
-    # Trim the filename if it's too long. 255 bytes is the limit on many filesystems.
-    total_length = len(filename + '.html')
-    if len(filename + '.html') > 255:
-        filename = filename[:(255 - len(filename + '.html'))]
-        log_if_v('Filename was truncated to 255 characters.')
-    filename += '.html'
-    log_if_v('Filename: %s' % filename)
+    for e in answers:
+        sys.stderr.flush()
+        url = e[0]
+        print('URL: %s' % url, file=sys.stderr)
 
-    # Fetch the URL to find the answer
-    log_if_v('Downloading answer from URL %s' % url)
-    try:
-        page_html = urllib.request.urlopen(url).read()
-        with open(filename, 'wb') as f:
-            f.write(page_html)
-    except urllib.error.URLError as error:
-        print('[ERROR] Failed to download answer from URL %s (%s)' % (url, error.reason), file=sys.stderr)
-        continue
-    except IOError as error:
-        print('[ERROR] Failed to save answer to file %s (%s)' % (filename, error.strerror), file=sys.stderr)
+        # Determine the date when this answer was written
+        try:
+            added_time = parse_quora_date(origin, e[1])
+        except ValueError as error:
+            print('[WARNING] Failed to parse date: %s' % str(error), file=sys.stderr)
+            added_time = 'xxxx-xx-xx'
+        print('Date: %s' % added_time, file=sys.stderr)
 
-    time.sleep(args.delay)
+        # Get the part of the URL indicating the question title; we will save under this name
+        m1 = re.search('quora\.com/([^/]+)/answer', url)
+        # if there's a context topic
+        m2 = re.search('quora\.com/[^/]+/([^/]+)/answer', url)
+        filename = added_time + ' '
+        if not m1 is None:
+            filename += m1.group(1)
+        elif not m2 is None:
+            filename += m2.group(1)
+        else:
+            print('[ERROR] Could not find question part of URL %s; skipping' % url, file=sys.stderr)
+            continue
+        # Trim the filename if it's too long. 255 bytes is the limit on many filesystems.
+        total_length = len(filename + '.html')
+        if len(filename + '.html') > 255:
+            filename = filename[:(255 - len(filename + '.html'))]
+            log_if_v('Filename was truncated to 255 characters.')
+        filename += '.html'
+        log_if_v('Filename: %s' % filename)
 
-print('Done', file=sys.stderr)
+        # Fetch the URL to find the answer
+        log_if_v('Downloading answer from URL %s' % url)
+        try:
+            page_html = urllib.request.urlopen(url).read()
+            with open(filename, 'wb') as f:
+                f.write(page_html)
+        except urllib.error.URLError as error:
+            print('[ERROR] Failed to download answer from URL %s (%s)' % (url, error.reason), file=sys.stderr)
+            continue
+        except IOError as error:
+            print('[ERROR] Failed to save answer to file %s (%s)' % (filename, error.strerror), file=sys.stderr)
+
+        time.sleep(args.delay)
+
+    print('Done', file=sys.stderr)
