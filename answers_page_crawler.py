@@ -78,7 +78,7 @@ def extract_date_from_answer(page_html):
     # appears above the time stamp, we will just return the very last
     # such string.
     if len(possible) > 1:
-        print("[ERROR] Date string is ambiguous; "
+        print("[WARNING] Date string is ambiguous; "
             "returning the last occurrence")
     if not possible:
         # Uh-oh
