@@ -153,6 +153,7 @@ if __name__ == "__main__":
     for url in want:
         page = download_page(url)
         datestamp = extract_date_from_answer(page)
-        origin = get_origin(1425465100551, 480)
+        #origin = get_origin(1425465100551, 480)
+        origin = get_origin()
         filename = get_filename(url, datestamp, origin)
         write_file(filename, page)
