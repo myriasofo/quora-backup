@@ -57,7 +57,10 @@ def extract_date_from_answer(page_html):
     '''\
     Given the HTML of a page, extract the Quora date string of the
     answer (so "Just Now", "Sat", "11 Nov" are all possible return
-    values).
+    values).  If an answer has been updated since it was originally
+    written, then return that date instead.  (Ideally one would want the
+    date when an answer was first written, but this is harder to obtain
+    without access to the "Your Content" page.)
     '''
     soup = BeautifulSoup(page_html)
     possible = []
@@ -65,7 +68,8 @@ def extract_date_from_answer(page_html):
         text = link.string
         if isinstance(text, str) and text.istitle() and\
             ("Written " in text or "Updated " in text):
-            # Append all but the "Written "
+            # Append all but the "Written " or "Updated "; it's actually
+            # just a coincidence that both have the same length...
             possible.append(text[len("Written "):])
     # The only way there could be more than one occurrence of such a
     # link (i.e. a link with text starting with "Written " and which as
