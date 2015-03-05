@@ -6,6 +6,7 @@ import urllib.request
 import re
 import sys
 import time
+from random import randint
 
 from crawler import parse_quora_date
 
@@ -25,6 +26,7 @@ from crawler import parse_quora_date
 
 # Change this
 INPUT_FILE = "changeme.html"
+USERNAME = "changemetoo"
 
 def make_soup(path):
     return BeautifulSoup(open(path))
@@ -37,6 +39,13 @@ def extract_answers(soup):
     want = set()
     for link in soup.find_all("a"):
         url = link.get("href")
+        class_ = link.get("class")
+        #if isinstance(url, str) and "quora" in url and "/answer/:
+        #if isinstance(url, str) and "quora" in url and isinstance(class_, list) and "question_link" in class_:
+        #if isinstance(url, str) and url[0] == "/":
+        if isinstance(class_, list) and "question_link" in class_:
+            #print(class_)
+            want.add(url + "/answer/" + USERNAME)
         if isinstance(url, str) and url[0] == "/" and "/answer/" in url:
             want.add("https://quora.com" + url)
     return want
@@ -148,8 +157,7 @@ def write_file(filename, content):
         f.write(content)
         print("Written: " + filename)
 
-if __name__ == "__main__":
-    want = extract_answers(make_soup(INPUT_FILE))
+def process_urls(want):
     for url in want:
         page = download_page(url)
         datestamp = extract_date_from_answer(page)
@@ -157,3 +165,13 @@ if __name__ == "__main__":
         origin = get_origin()
         filename = get_filename(url, datestamp, origin)
         write_file(filename, page)
+        num = randint(5, 10)
+        print("Sleeping for {} seconds".format(str(num)))
+        time.sleep(num)
+
+if __name__ == "__main__":
+    #want = extract_answers(make_soup(INPUT_FILE))
+    want = list(extract_answers(make_soup(INPUT_FILE)))
+    #print(len(want))
+    #print(want[:6])
+    process_urls(want)
