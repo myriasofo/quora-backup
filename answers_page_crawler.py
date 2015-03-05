@@ -26,7 +26,7 @@ from crawler import parse_quora_date
 
 # Change this
 INPUT_FILE = "changeme.html"
-USERNAME = "changemetoo"
+USERNAME = "Change-Me-Too"
 
 def make_soup(path):
     return BeautifulSoup(open(path))
@@ -80,24 +80,22 @@ def extract_date_from_answer(page_html):
     possible = []
     for link in soup.find_all("a"):
         text = link.string
-        if isinstance(text, str) and text.istitle() and\
-            ("Written " in text or "Updated " in text):
+        if isinstance(text, str) and ("Written " in text or\
+            "Updated " in text):
             # Append all but the "Written " or "Updated "; it's actually
             # just a coincidence that both have the same length...
             possible.append(text[len("Written "):])
     # The only way there could be more than one occurrence of such a
-    # link (i.e. a link with text starting with "Written " and which as
-    # Title Caps All The Way is for the user to be clever and have
-    # inserted this into their answer.  Since all the answer text
-    # appears above the time stamp, we will just return the very last
-    # such string.
+    # link (i.e. a link containing "Written " or "Updated " is for the
+    # user to be clever and have inserted this into their answer.  Since
+    # all the answer text appears above the time stamp, we will just
+    # return the very last such string.
     if len(possible) > 1:
         print("[WARNING] Date string is ambiguous; "
             "returning the last occurrence")
     if not possible:
-        # Uh-oh
-        print("Something has gone terribly wrong. ")
-        return "Just Now"
+        print("[WARNING] Could not find a date; we'll just use 'just now'")
+        return "just now"
     return possible[-1]
 
 def get_filename(url, timestamp, origin):
@@ -175,11 +173,11 @@ def process_urls(want):
         time.sleep(num)
 
 if __name__ == "__main__":
-    if INPUT_FILE == "changeme.html" or USERNAME == "changemetoo":
+    if INPUT_FILE == "changeme.html" or USERNAME == "Change-Me-Too":
         print("Oops, you must change INPUT_FILE and USERNAME first")
     else:
         #want = extract_answers(make_soup(INPUT_FILE))
         want = list(extract_answers(make_soup(INPUT_FILE)))
         #print(len(want))
-        #print(want[:6])
+        print(want)
         #process_urls(want)
