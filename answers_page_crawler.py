@@ -40,14 +40,19 @@ def extract_answers(soup):
     for link in soup.find_all("a"):
         url = link.get("href")
         class_ = link.get("class")
-        #if isinstance(url, str) and "quora" in url and "/answer/:
-        #if isinstance(url, str) and "quora" in url and isinstance(class_, list) and "question_link" in class_:
-        #if isinstance(url, str) and url[0] == "/":
-        if isinstance(class_, list) and "question_link" in class_:
-            #print(class_)
+        if isinstance(url, str) and isinstance(class_, list) and\
+            "question_link" in class_:
             want.add(url + "/answer/" + USERNAME)
-        if isinstance(url, str) and url[0] == "/" and "/answer/" in url:
-            want.add("https://quora.com" + url)
+
+        # When I was testing this before, the question links had a
+        # different format, for some reason.  If the above produces an
+        # empty set, then try the following (or some boolean operation
+        # combination of the components of the following) instead (or
+        # just look at the input HTML and figure out the pattern
+        # yourself)
+        #if isinstance(url, str) and "quora" in url and\
+            #"/answer/" in url and url[0] == "/":
+            #want.add("https://quora.com" + url)
     return want
 
 def download_page(url):
@@ -170,8 +175,11 @@ def process_urls(want):
         time.sleep(num)
 
 if __name__ == "__main__":
-    #want = extract_answers(make_soup(INPUT_FILE))
-    want = list(extract_answers(make_soup(INPUT_FILE)))
-    #print(len(want))
-    #print(want[:6])
-    process_urls(want)
+    if INPUT_FILE == "changeme.html" or USERNAME == "changemetoo":
+        print("Oops, you must change INPUT_FILE and USERNAME first")
+    else:
+        #want = extract_answers(make_soup(INPUT_FILE))
+        want = list(extract_answers(make_soup(INPUT_FILE)))
+        #print(len(want))
+        #print(want[:6])
+        #process_urls(want)
